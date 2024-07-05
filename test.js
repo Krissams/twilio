@@ -1,68 +1,35 @@
-import React from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+// Load the Twilio module
+const twilio = require('twilio');
 
-const WallboardItem = ({ title, agentsAvailable, totalAgents, waitingNow, longestWaiting, abandonedToday }) => (
-  <Paper style={{ padding: 16, marginBottom: 16 }}>
-    <Typography variant="h6">{title}</Typography>
-    <Typography variant="caption">PULL REPORT: 5 MIN AGO</Typography>
-    <Grid container spacing={2} style={{ marginTop: 16 }}>
-      <Grid item xs={2}>
-        <Typography variant="h4">{agentsAvailable}</Typography>
-        <Typography variant="caption">Agents Available</Typography>
-      </Grid>
-      <Grid item xs={2}>
-        <Typography variant="h4">{totalAgents}</Typography>
-        <Typography variant="caption">Total Agents</Typography>
-      </Grid>
-      <Grid item xs={2}>
-        <Typography variant="h4">{waitingNow}</Typography>
-        <Typography variant="caption">Waiting Now</Typography>
-      </Grid>
-      <Grid item xs={2}>
-        <Typography variant="h4">{longestWaiting}</Typography>
-        <Typography variant="caption">Longest Waiting</Typography>
-      </Grid>
-      <Grid item xs={2}>
-        <Typography variant="h4">{abandonedToday}</Typography>
-        <Typography variant="caption">Abandoned Today</Typography>
-      </Grid>
-    </Grid>
-  </Paper>
-);
+// Your Account SID and Auth Token from twilio.com/console
+const accountSid = 'your_account_sid';
+const authToken = 'your_auth_token';
 
-const Wallboard = () => (
-  <Grid container spacing={2}>
-    <Grid item xs={12}>
-      <WallboardItem
-        title="QUEUE NAME"
-        agentsAvailable={12}
-        totalAgents={23}
-        waitingNow={3}
-        longestWaiting={2}
-        abandonedToday={4}
-      />
-    </Grid>
-    <Grid item xs={12}>
-      <WallboardItem
-        title="QUEUE NAME"
-        agentsAvailable={12}
-        totalAgents={23}
-        waitingNow={3}
-        longestWaiting={2}
-        abandonedToday={4}
-      />
-    </Grid>
-    <Grid item xs={12}>
-      <WallboardItem
-        title="QUEUE NAME"
-        agentsAvailable={12}
-        totalAgents={23}
-        waitingNow={3}
-        longestWaiting={2}
-        abandonedToday={4}
-      />
-    </Grid>
-  </Grid>
-);
+// Initialize the Twilio client
+const client = twilio(accountSid, authToken);
 
-export default Wallboard;
+// Function to fetch cumulative statistics for the day
+async function getCumulativeStatistics() {
+    try {
+        const flexWorkspaceSid = 'your_workspace_sid'; // Replace with your Flex Workspace SID
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0); // Set to start of the day
+        const endDate = new Date();
+        endDate.setHours(23, 59, 59, 999); // Set to end of the day
+
+        const cumulativeStatistics = await client.taskrouter
+            .workspaces(flexWorkspaceSid)
+            .statistics()
+            .fetch({
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString()
+            });
+
+        console.log('Cumulative Statistics for the Day:', cumulativeStatistics);
+    } catch (error) {
+        console.error('Error fetching cumulative statistics:', error);
+    }
+}
+
+// Call the function to fetch statistics
+getCumulativeStatistics();
