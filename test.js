@@ -1,35 +1,32 @@
-// Load the Twilio module
-const twilio = require('twilio');
+const crypto = require('crypto');
 
-// Your Account SID and Auth Token from twilio.com/console
-const accountSid = 'your_account_sid';
-const authToken = 'your_auth_token';
-
-// Initialize the Twilio client
-const client = twilio(accountSid, authToken);
-
-// Function to fetch cumulative statistics for the day
-async function getCumulativeStatistics() {
-    try {
-        const flexWorkspaceSid = 'your_workspace_sid'; // Replace with your Flex Workspace SID
-        const startDate = new Date();
-        startDate.setHours(0, 0, 0, 0); // Set to start of the day
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999); // Set to end of the day
-
-        const cumulativeStatistics = await client.taskrouter
-            .workspaces(flexWorkspaceSid)
-            .statistics()
-            .fetch({
-                startDate: startDate.toISOString(),
-                endDate: endDate.toISOString()
-            });
-
-        console.log('Cumulative Statistics for the Day:', cumulativeStatistics);
-    } catch (error) {
-        console.error('Error fetching cumulative statistics:', error);
-    }
+// Function to encrypt a string
+function encryptString(input, key) {
+    const iv = crypto.randomBytes(16); // Initialization vector
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
+    let encrypted = cipher.update(input, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
 }
 
-// Call the function to fetch statistics
-getCumulativeStatistics();
+// Function to decrypt a string
+function decryptString(encryptedInput, key) {
+    const parts = encryptedInput.split(':');
+    const iv = Buffer.from(parts[0], 'hex');
+    const encryptedText = Buffer.from(parts[1], 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+}
+
+// Example usage
+const originalString = "YourSecretMessage";
+const key = crypto.randomBytes(32); // AES-256 requires a 32-byte key
+
+const encryptedString = encryptString(originalString, key);
+const decryptedString = decryptString(encryptedString, key);
+
+console.log(`Original: ${originalString}`);
+console.log(`Encrypted: ${encryptedString}`);
+console.log(`Decrypted: ${decryptedString}`);
