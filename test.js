@@ -1,32 +1,15 @@
-const crypto = require('crypto');
+#!/bin/bash
 
-// Function to encrypt a string
-function encryptString(input, key) {
-    const iv = crypto.randomBytes(16); // Initialization vector
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
-    let encrypted = cipher.update(input, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
-}
+# Example usage: ./json_to_env.sh yourfile.json
 
-// Function to decrypt a string
-function decryptString(encryptedInput, key) {
-    const parts = encryptedInput.split(':');
-    const iv = Buffer.from(parts[0], 'hex');
-    const encryptedText = Buffer.from(parts[1], 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-}
+# Check if the file is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <json-file>"
+  exit 1
+fi
 
-// Example usage
-const originalString = "YourSecretMessage";
-const key = crypto.randomBytes(32); // AES-256 requires a 32-byte key
-
-const encryptedString = encryptString(originalString, key);
-const decryptedString = decryptString(encryptedString, key);
-
-console.log(`Original: ${originalString}`);
-console.log(`Encrypted: ${encryptedString}`);
-console.log(`Decrypted: ${decryptedString}`);
+# Read the JSON file and convert each key to an environment variable
+while IFS="=" read -r key value; do
+  export "$key"="$value"
+  echo "Exported: $key=$value"
+done < <(jq -r 'to_entries | .[] | "\(.key)=\(.value)"' "$1")
